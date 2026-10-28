@@ -1,0 +1,48 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Nomor versi = nomor run + 100 (selalu lebih besar dari build lokal yang versionCode-nya 1).
+      - name: Hitung nomor versi
+        run: echo "CODE=$((${{ github.run_number }} + 100))" >> $GITHUB_ENV
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -PappVersionCode=$CODE
+
+      - name: Siapkan APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk FloatingCounter.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: floating-counter-apk
+          path: FloatingCounter.apk
+
+      # Rilis otomatis: aplikasi mengecek rilis terbaru ini untuk fitur Perbarui.
+      - name: Buat rilis GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$CODE" FloatingCounter.apk \
+            --title "v$CODE" \
+            --notes "Build otomatis #${{ github.run_number }} (${{ github.sha }})"
