@@ -412,7 +412,7 @@ class BubbleService : Service() {
             intArrayOf(Palette.lighten(c.color, 0.22f), c.color)
         ).apply {
             shape = GradientDrawable.OVAL
-            setStroke(dp(2), Color.argb(200, 255, 255, 255))
+            setStroke(dp(2), Color.argb(200, 0, 0, 0))
         }
         ctrlAlpha = if (c.readOnly) 0.35f else 1f
         if (expanded) {
