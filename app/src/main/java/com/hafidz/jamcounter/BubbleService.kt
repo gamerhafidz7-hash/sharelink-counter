@@ -412,7 +412,7 @@ class BubbleService : Service() {
             intArrayOf(Palette.lighten(c.color, 0.22f), c.color)
         ).apply {
             shape = GradientDrawable.OVAL
-            setStroke(dp(2), Color.argb(200, 0, 0, 0))
+            setStroke(dp(2), Palette.BORDER_DARK_GRAY)
         }
         ctrlAlpha = if (c.readOnly) 0.35f else 1f
         if (expanded) {
@@ -753,7 +753,7 @@ class BubbleService : Service() {
         val today = Days.today().toEpochDay()
         var target = db.counterByDay(today)
         if (target == null) {
-            val color = Palette.colors[db.counters().size % Palette.colors.size]
+            val color = Palette.defaultColorFor(LocalDate.ofEpochDay(today))
             val id = db.addCounter(today, "", color, 0, false)
             target = if (id >= 0) db.counter(id) else db.counterByDay(today)
         }

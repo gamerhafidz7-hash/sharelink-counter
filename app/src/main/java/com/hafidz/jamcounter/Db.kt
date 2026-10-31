@@ -2,6 +2,7 @@ package com.hafidz.jamcounter
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Color
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
@@ -32,7 +33,7 @@ data class Counter(
  * Semua pemanggilan dilakukan dari main thread.
  */
 class Db private constructor(ctx: Context) :
-    SQLiteOpenHelper(ctx.applicationContext, "counter.db", null, 2) {
+    SQLiteOpenHelper(ctx.applicationContext, "counter.db", null, 3) {
 
     val listeners = CopyOnWriteArrayList<() -> Unit>()
 
@@ -62,7 +63,7 @@ class Db private constructor(ctx: Context) :
         val today = LocalDate.now()
         val cv = ContentValues().apply {
             put("name", Fmt.cardDate(today))
-            put("color", Palette.colors[0])
+            put("color", Palette.defaultColorFor(today))
             put("value", 0)
             put("day", today.toEpochDay())
         }
@@ -71,6 +72,7 @@ class Db private constructor(ctx: Context) :
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) migrateTo2(db)
+        if (oldVersion < 3) migrateTo3(db)
     }
 
     /** v1 (nama bebas) -> v2 (satu counter = satu tanggal). Data lama dipertahankan. */
@@ -116,6 +118,34 @@ class Db private constructor(ctx: Context) :
                 "(SELECT COUNT(*) FROM events e WHERE e.counter_id=counters.id))"
         )
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_counters_day ON counters(day)")
+    }
+
+    /** v2 -> v3: Update warna bawaan counter lama sesuai aturan tanggal (hitam/hijau/kuning). */
+    private fun migrateTo3(db: SQLiteDatabase) {
+        val oldDefaults = hashSetOf(
+            Color.parseColor("#FF9800"),
+            Color.parseColor("#FF5722"),
+            Color.parseColor("#4CAF50"),
+            Color.parseColor("#CDDC39"),
+            Color.parseColor("#00BCD4"),
+            Color.parseColor("#FFEB3B"),
+            Color.parseColor("#795548"),
+            Color.parseColor("#E91E63"),
+            Color.parseColor("#2196F3"),
+            Color.parseColor("#9C27B0")
+        )
+        db.rawQuery("SELECT id, day, color FROM counters", null).use { c ->
+            while (c.moveToNext()) {
+                val id = c.getLong(0)
+                val day = c.getLong(1)
+                val color = c.getInt(2)
+                if (color in oldDefaults) {
+                    val newColor = Palette.defaultColorFor(LocalDate.ofEpochDay(day))
+                    val cv = ContentValues().apply { put("color", newColor) }
+                    db.update("counters", cv, "id=?", arrayOf(id.toString()))
+                }
+            }
+        }
     }
 
     fun notifyChanged() {

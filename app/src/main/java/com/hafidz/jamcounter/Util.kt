@@ -18,17 +18,42 @@ import java.time.ZoneId
 fun Context.dp(v: Int): Int = (v * resources.displayMetrics.density + 0.5f).toInt()
 
 object Palette {
+    val BLACK: Int = Color.parseColor("#212121")
+    val GREEN: Int = Color.parseColor("#1DA85A")
+    val YELLOW: Int = Color.parseColor("#FFC107")
+    val BORDER_DARK_GRAY: Int = Color.parseColor("#505050")
+
+    /**
+     * Tanggal kampanye utama (Peak Day):
+     * - Tanggal kembar (1.1, 2.2, ..., 9.9, 10.10, 11.11, 12.12)
+     * - Tanggal 25 setiap bulan (Payday sale)
+     */
+    fun isPeakDay(d: LocalDate): Boolean =
+        d.dayOfMonth == d.monthValue || d.dayOfMonth == 25
+
+    /**
+     * Default warna bubble / counter berdasarkan tanggal:
+     * - Tanggal kembar & tanggal 25 -> HIJAU
+     * - H-1 dan H+1 dari tanggal kembar / 25 -> KUNING
+     * - Hari lainnya (tiap hari reguler) -> HITAM
+     */
+    fun defaultColorFor(date: LocalDate): Int {
+        if (isPeakDay(date)) return GREEN
+        if (isPeakDay(date.plusDays(1)) || isPeakDay(date.minusDays(1))) return YELLOW
+        return BLACK
+    }
+
     val colors: IntArray = intArrayOf(
+        BLACK,
+        GREEN,
+        YELLOW,
         Color.parseColor("#FF9800"),
         Color.parseColor("#FF5722"),
         Color.parseColor("#4CAF50"),
-        Color.parseColor("#CDDC39"),
         Color.parseColor("#00BCD4"),
-        Color.parseColor("#FFEB3B"),
-        Color.parseColor("#795548"),
-        Color.parseColor("#E91E63"),
         Color.parseColor("#2196F3"),
-        Color.parseColor("#9C27B0")
+        Color.parseColor("#9C27B0"),
+        Color.parseColor("#E91E63")
     )
 
     /** Palet besar untuk pemilih warna: 12 rona x 4 tingkat + deretan netral/cokelat. */

@@ -12,7 +12,7 @@ android {
         minSdk = 26
         targetSdk = 34
         // Diisi workflow GitHub (-PappVersionCode=<nomor run>) supaya tiap rilis lebih baru dari sebelumnya.
-        val vc = (project.findProperty("appVersionCode") as String?)?.toIntOrNull() ?: 1
+        val vc = (project.findProperty("appVersionCode") as String?)?.toIntOrNull() ?: 2
         versionCode = vc
         versionName = "1.$vc"
     }

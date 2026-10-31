@@ -50,7 +50,8 @@ class CounterFormActivity : Activity() {
     private lateinit var readOnlySwitch: Switch
     private lateinit var colorDot: View
 
-    private var color = Palette.colors[0]
+    private var color = Palette.BLACK
+    private var isColorCustomized = false
     private var chosenDate: LocalDate = LocalDate.now()
     private var canSave = true
     private var saveItem: MenuItem? = null
@@ -74,7 +75,8 @@ class CounterFormActivity : Activity() {
         actionBar?.setHomeAsUpIndicator(R.drawable.ic_close)
 
         val initialDate = original?.let { LocalDate.ofEpochDay(it.day) } ?: LocalDate.now()
-        color = original?.color ?: Palette.colors[db.counters().size % Palette.colors.size]
+        color = original?.color ?: Palette.defaultColorFor(initialDate)
+        isColorCustomized = (original != null)
 
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -194,6 +196,7 @@ class CounterFormActivity : Activity() {
             setOnClickListener {
                 showColorPicker {
                     color = it
+                    isColorCustomized = true
                     background = Palette.oval(color)
                 }
             }
@@ -239,6 +242,10 @@ class CounterFormActivity : Activity() {
     private fun update() {
         chosenDate = resolve(dayPicker.value, monthPicker.value)
         resolvedLabel.text = Fmt.dateFull(chosenDate)
+        if (!isColorCustomized) {
+            color = Palette.defaultColorFor(chosenDate)
+            colorDot.background = Palette.oval(color)
+        }
         val dup = db.dayTaken(chosenDate.toEpochDay(), editId)
         warning.text = "Tanggal ini sudah punya counter. Pilih tanggal lain."
         warning.visibility = if (dup) View.VISIBLE else View.GONE
